@@ -1,6 +1,6 @@
 # BladeMart — Full-Stack E-Commerce Platform
 
-[![CI](https://github.com/YOUR_USERNAME/blademart-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/blademart-ecommerce/actions/workflows/ci.yml)
+[![CI](https://github.com/adrohilla99/blademart-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/adrohilla99/blademart-ecommerce/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
@@ -15,7 +15,7 @@
 |---------|-----|
 | **Frontend** | [https://blademart-ecommerce.vercel.app](https://blademart-ecommerce.vercel.app) |
 | **Backend API** | [https://blademart-api.onrender.com/api/health](https://blademart-api.onrender.com/api/health) |
-| **GitHub Repo** | [https://github.com/YOUR_USERNAME/blademart-ecommerce](https://github.com/YOUR_USERNAME/blademart-ecommerce) |
+| **GitHub Repo** | [https://github.com/adrohilla99/blademart-ecommerce](https://github.com/adrohilla99/blademart-ecommerce) |
 
 > **Demo credentials:**
 > - Email: `demo@blademart.com`
@@ -182,7 +182,7 @@ blademart-ecommerce/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/blademart-ecommerce.git
+git clone https://github.com/adrohilla99/blademart-ecommerce.git
 cd blademart-ecommerce
 ```
 
@@ -415,16 +415,10 @@ Tests cover:
 |--------|---------|
 | `main` | Production-ready, protected |
 | `develop` | Integration branch for features |
-| `feature/project-setup` | Initial repo structure |
-| `feature/backend-foundation` | Server bootstrap, DB, middleware |
-| `feature/authentication` | JWT auth, register, login |
-| `feature/product-catalog` | Products API + frontend |
-| `feature/cart` | Cart state + cart page |
-| `feature/stripe-checkout` | Stripe integration |
-| `feature/orders-history` | Orders API + history UI |
-| `feature/ui-polish` | UX improvements, animations |
-| `feature/testing-ci` | Tests + GitHub Actions |
-| `chore/documentation` | README + deployment docs |
+| `feature/repo-hardening` | Root config, .gitignore, .gitattributes, workspace scripts, CI |
+| `feature/backend-verification` | Prisma schema, Express app, auth, products, checkout, orders |
+| `feature/frontend-verification` | Vite app, Zustand stores, API layer, all UI pages/components |
+| `feature/checkout-order-flow` | Stripe success/cancel pages, order history and detail pages |
 
 ---
 
@@ -516,4 +510,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-<p align="center">Built with ❤️ as a portfolio project · <a href="https://github.com/YOUR_USERNAME/blademart-ecommerce">View on GitHub</a></p>
+<p align="center">Built with ❤️ as a portfolio project · <a href="https://github.com/adrohilla99/blademart-ecommerce">View on GitHub</a></p>
