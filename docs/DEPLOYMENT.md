@@ -1,208 +1,146 @@
-# BladeMart — Deployment Guide
+# BladeMart Deployment Guide
 
-Step-by-step guide to deploy BladeMart to production using free hosting services.
+This guide explains how to deploy BladeMart using a free-tier stack:
 
----
+- Frontend: Vercel
+- Backend API: Render
+- Database: Neon PostgreSQL
+- Payments: Stripe (test mode or live mode)
 
-## Stack Overview
+## 1. Prerequisites
 
-| Layer | Service | Free Tier |
-|-------|---------|-----------|
-| Frontend | Vercel | Unlimited hobby projects |
-| Backend | Render | 750 hours/month (1 service free) |
-| Database | Neon | 0.5 GB storage, 1 branch |
+- A GitHub repository containing this project
+- Accounts on Neon, Render, Vercel, and Stripe
+- Node.js 18+ and npm 9+ for local checks
 
----
+## 2. Recommended Architecture
 
-## Step 1: Create GitHub Repository
+- Frontend app hosted on Vercel (`client`)
+- Backend API hosted on Render (`server`)
+- Managed PostgreSQL hosted on Neon
+- Stripe Checkout + webhook callbacks handled by backend API
 
-```bash
-cd blademart-ecommerce
+## 3. Environment Variables
 
-# Initialize git
-git init
-git branch -M main
+### Backend (`server`)
 
-# Create .gitignore is already set up
+- `NODE_ENV=production`
+- `PORT=10000`
+- `DATABASE_URL=<neon-connection-string>`
+- `JWT_SECRET=<strong-random-secret>`
+- `JWT_EXPIRES_IN=7d`
+- `STRIPE_SECRET_KEY=<sk_test_... or sk_live_...>`
+- `STRIPE_WEBHOOK_SECRET=<whsec_...>`
+- `CLIENT_URL=<frontend-url>`
 
-# Initial commit
-git add .
-git commit -m "feat: initial BladeMart project scaffold"
+### Frontend (`client`)
 
-# Create repository on GitHub (via CLI or web)
-gh repo create blademart-ecommerce \
-  --public \
-  --description "Full-stack e-commerce platform built with React, Node.js, Stripe, and PostgreSQL, featuring authentication, cart management, checkout, and order history."
+- `VITE_API_URL=<backend-url>/api`
+- `VITE_APP_NAME=BladeMart`
 
-# Push
-git remote add origin https://github.com/YOUR_USERNAME/blademart-ecommerce.git
-git push -u origin main
+## 4. Provision the Database (Neon)
 
-# Create develop branch
-git checkout -b develop
-git push -u origin develop
+1. Create a Neon project.
+2. Copy the PostgreSQL connection string.
+3. Save it for Render (`DATABASE_URL`).
+
+Example format:
+
+```text
+postgresql://username:password@host/database?sslmode=require
 ```
 
----
+## 5. Configure Stripe
 
-## Step 2: Neon PostgreSQL (Database)
+1. Open Stripe Dashboard.
+2. Enable Test mode for non-production testing.
+3. Copy `sk_test_...` from Developers -> API keys.
+4. Add webhook endpoint after backend deploy:
+   - `https://<render-service>.onrender.com/api/checkout/webhook`
+5. Subscribe to event:
+   - `checkout.session.completed`
+6. Copy signing secret `whsec_...`.
 
-1. Go to [neon.tech](https://neon.tech) and create a free account
-2. Click **New Project** → name it `blademart`
-3. Choose the closest region to your Render server
-4. Copy the **Connection string** (it looks like):
-   ```
-   postgresql://username:password@ep-xxxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
-   ```
-5. Save this — you'll need it for Render and local development
+## 6. Deploy Backend on Render
 
----
+### Option A: Using `server/render.yaml`
 
-## Step 3: Stripe Setup
+1. In Render, create a new Blueprint or Web Service from the repository.
+2. Use `server` as root service folder.
+3. Confirm build and start settings:
+   - Build: `npm ci && npx prisma generate && npx prisma migrate deploy && npm run build`
+   - Start: `node dist/server.js`
+4. Set backend environment variables listed above.
 
-1. Go to [stripe.com](https://stripe.com) and create/login to your account
-2. Make sure you are in **Test mode** (toggle in dashboard)
-3. Go to **Developers → API Keys**
-4. Copy your **Secret key** (`sk_test_...`)
-5. For webhooks (set up after deploying backend):
-   - Go to **Developers → Webhooks → Add endpoint**
-   - Endpoint URL: `https://YOUR-RENDER-URL.onrender.com/api/checkout/webhook`
-   - Select events: `checkout.session.completed`
-   - Copy the **Signing secret** (`whsec_...`)
+### Option B: Manual Web Service Setup
 
----
+Configure:
 
-## Step 4: Deploy Backend to Render
+- Runtime: Node
+- Root Directory: `server`
+- Build Command: `npm ci && npx prisma generate && npx prisma migrate deploy && npm run build`
+- Start Command: `node dist/server.js`
+- Health Check Path: `/api/health`
 
-1. Go to [render.com](https://render.com) and create a free account
-2. Click **New → Web Service**
-3. Connect your GitHub account and select `blademart-ecommerce`
-4. Configure:
-   - **Name**: `blademart-api`
-   - **Root Directory**: `server`
-   - **Build Command**: `npm ci && npx prisma generate && npx prisma migrate deploy && npm run build`
-   - **Start Command**: `node dist/server.js`
-   - **Instance Type**: Free
+## 7. Run Migrations and Seed Data
 
-5. Add Environment Variables:
-   ```
-   NODE_ENV=production
-   PORT=10000
-   DATABASE_URL=<your-neon-connection-string>
-   JWT_SECRET=<generate-a-strong-random-secret>
-   JWT_EXPIRES_IN=7d
-   STRIPE_SECRET_KEY=sk_test_<your-stripe-secret-key>
-   STRIPE_WEBHOOK_SECRET=<after-step-3-webhook-setup>
-   CLIENT_URL=<your-vercel-frontend-url>  # Add after Step 5
-   ```
+After first successful backend deploy:
 
-6. Click **Create Web Service**
-7. Wait for the first deploy. Once live, test:
-   ```
-   curl https://blademart-api.onrender.com/api/health
-   ```
-
-8. **Seed the database:**
-   In Render dashboard → Shell tab:
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-   Or run locally pointing to production DB:
-   ```bash
-   DATABASE_URL=<neon-url> npm run db:seed
-   ```
-
----
-
-## Step 5: Deploy Frontend to Vercel
-
-1. Go to [vercel.com](https://vercel.com) and create a free account
-2. Click **Add New → Project**
-3. Import your `blademart-ecommerce` GitHub repository
-4. Configure:
-   - **Root Directory**: `client`
-   - **Framework Preset**: Vite (auto-detected)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-5. Add Environment Variables:
-   ```
-   VITE_API_URL=https://blademart-api.onrender.com/api
-   VITE_APP_NAME=BladeMart
-   ```
-
-6. Click **Deploy**
-7. Once live, copy your Vercel URL (e.g., `https://blademart-ecommerce.vercel.app`)
-
----
-
-## Step 6: Update Cross-Origin Settings
-
-1. **Update Render** `CLIENT_URL` env var to your Vercel URL
-2. **Redeploy** the Render service (or it will redeploy automatically on next push)
-
----
-
-## Step 7: Configure Stripe Webhook (Production)
-
-1. Go back to Stripe Dashboard → Developers → Webhooks
-2. The endpoint URL should be: `https://blademart-api.onrender.com/api/checkout/webhook`
-3. If not already done, click **Add Endpoint**, set it up, copy the `whsec_...` signing secret
-4. Update `STRIPE_WEBHOOK_SECRET` in Render environment variables
-
----
-
-## Step 8: Verify Everything Works
-
-Run through this checklist:
-
-- [ ] `GET https://blademart-api.onrender.com/api/health` returns `{ status: "healthy" }`
-- [ ] `GET https://blademart-api.onrender.com/api/products` returns product list
-- [ ] Frontend loads at Vercel URL
-- [ ] Can register a new account
-- [ ] Can login with demo credentials (`demo@blademart.com` / `Demo1234!`)
-- [ ] Products page loads with search and filter
-- [ ] Can add products to cart
-- [ ] Can initiate checkout (redirects to Stripe)
-- [ ] Stripe test payment completes with card `4242 4242 4242 4242`
-- [ ] Success page shows after payment
-- [ ] Order appears in order history
-
----
-
-## CI/CD Pipeline
-
-GitHub Actions runs on every push to `main` and `develop`:
-
-1. **Server Lint** — ESLint TypeScript check
-2. **Server Build** — TypeScript compilation
-3. **Server Tests** — Jest + Supertest with PostgreSQL service container
-4. **Client Lint** — ESLint + TypeScript type-check
-5. **Client Tests** — Vitest unit tests
-6. **Client Build** — Vite production build
-
-Vercel and Render both auto-deploy when `main` is updated.
-
----
-
-## Generating a Secure JWT Secret
+1. Open Render shell for the backend service.
+2. Run:
 
 ```bash
-# Using Node.js
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
-# Using OpenSSL
-openssl rand -hex 64
+npx prisma migrate deploy
+npx tsx prisma/seed.ts
 ```
 
----
+## 8. Deploy Frontend on Vercel
 
-## Troubleshooting
+1. Import repository in Vercel.
+2. Set project root to `client`.
+3. Confirm Vite build settings:
+   - Build command: `npm run build`
+   - Output directory: `dist`
+4. Add frontend environment variables.
+5. Deploy.
 
-**Render cold starts:** Free Render services spin down after 15 minutes of inactivity. The first request after sleeping may take 30–60 seconds. Consider using [UptimeRobot](https://uptimerobot.com) (free) to ping your health endpoint every 5 minutes.
+## 9. Connect Frontend and Backend
 
-**CORS errors:** Ensure `CLIENT_URL` on Render exactly matches your Vercel URL (no trailing slash).
+1. Set frontend `VITE_API_URL` to backend API URL.
+2. Set backend `CLIENT_URL` to frontend URL.
+3. Redeploy services if required.
 
-**Prisma migration fails on deploy:** Make sure `DATABASE_URL` is correctly set and the Neon database is accessible from Render's region.
+## 10. Verification Checklist
 
-**Stripe webhook signature fails:** Ensure `STRIPE_WEBHOOK_SECRET` matches the signing secret from the Stripe dashboard for that specific endpoint.
+- `GET /api/health` returns healthy status
+- Product list loads in frontend
+- Registration and login work
+- Cart operations work
+- Checkout session creation redirects to Stripe
+- Test payment succeeds with Stripe test card
+- Successful payment appears in order history
+
+## 11. Useful Operational Notes
+
+- Render free instances may cold start after inactivity.
+- Keep `JWT_SECRET`, Stripe keys, and database credentials in platform secrets only.
+- Do not commit `.env` files.
+- For production traffic, rotate credentials regularly and monitor logs.
+
+## 12. Troubleshooting
+
+### CORS errors
+
+- Ensure backend `CLIENT_URL` exactly matches frontend origin.
+
+### Stripe signature failures
+
+- Ensure `STRIPE_WEBHOOK_SECRET` belongs to the exact configured webhook endpoint.
+
+### Migration errors
+
+- Confirm `DATABASE_URL` is valid and reachable from Render.
+
+### Empty product catalog
+
+- Run seed command in deployed backend environment.

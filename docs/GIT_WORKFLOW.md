@@ -1,195 +1,149 @@
-# BladeMart — Git Branch Workflow
+# BladeMart Git Workflow
 
-## Branch Strategy
+This document defines a clean public GitHub workflow for contributors and maintainers.
 
-This project follows a **GitFlow-inspired** branching model.
+## 1. Branching Model
 
-```
-main          ← production-ready, protected
-  └── develop ← integration branch
-        ├── feature/project-setup
-        ├── feature/backend-foundation
-        ├── feature/authentication
-        ├── feature/product-catalog
-        ├── feature/cart
-        ├── feature/stripe-checkout
-        ├── feature/orders-history
-        ├── feature/ui-polish
-        ├── feature/testing-ci
-        └── chore/documentation
-```
+- `main`: stable, release-ready branch
+- `develop`: integration branch for upcoming work (optional but recommended)
+- Feature branches: `feature/<short-name>`
+- Bugfix branches: `fix/<short-name>`
+- Chore/docs branches: `chore/<short-name>`, `docs/<short-name>`
+- Hotfix branches: `hotfix/<short-name>` (cut from `main`)
 
----
+## 2. Branch Naming Conventions
 
-## Suggested Commit Sequence
+- `feature/auth-jwt-refresh`
+- `feature/product-filtering`
+- `fix/checkout-session-validation`
+- `docs/readme-setup-refresh`
+- `hotfix/stripe-webhook-signature`
 
-Run these commands to replicate a professional commit history:
+Use lowercase kebab-case.
 
-```bash
-# ─────────────────────────────────────────────
-# SETUP
-# ─────────────────────────────────────────────
-git init
-git branch -M main
-git checkout -b develop
+## 3. Standard Contribution Flow
 
-git checkout -b feature/project-setup
-git add .gitignore package.json LICENSE README.md
-git commit -m "chore(setup): initialize monorepo with root configs and license"
-git checkout develop
-git merge feature/project-setup --no-ff -m "merge: feature/project-setup"
-
-# ─────────────────────────────────────────────
-# BACKEND FOUNDATION
-# ─────────────────────────────────────────────
-git checkout -b feature/backend-foundation
-git add server/package.json server/tsconfig.json server/.eslintrc.json server/.env.example server/jest.config.js
-git add server/src/app.ts server/src/server.ts
-git add server/src/config/
-git add server/src/middleware/
-git add server/src/utils/
-git commit -m "feat(server): bootstrap Express app with middleware stack, env validation, and error handling"
-git add server/prisma/
-git commit -m "feat(db): add Prisma schema with User, Product, Order, OrderItem models and seed data"
-git checkout develop
-git merge feature/backend-foundation --no-ff -m "merge: feature/backend-foundation"
-
-# ─────────────────────────────────────────────
-# AUTHENTICATION
-# ─────────────────────────────────────────────
-git checkout -b feature/authentication
-git add server/src/validators/auth.validator.ts
-git add server/src/services/auth.service.ts
-git add server/src/controllers/auth.controller.ts
-git add server/src/routes/auth.routes.ts
-git commit -m "feat(auth): add JWT-based registration, login, and /me endpoint with bcrypt hashing"
-git add server/src/tests/auth.test.ts
-git commit -m "test(auth): add coverage for register, login, protected routes, and invalid inputs"
-git checkout develop
-git merge feature/authentication --no-ff -m "merge: feature/authentication"
-
-# ─────────────────────────────────────────────
-# PRODUCT CATALOG
-# ─────────────────────────────────────────────
-git checkout -b feature/product-catalog
-git add server/src/validators/product.validator.ts
-git add server/src/services/product.service.ts
-git add server/src/controllers/product.controller.ts
-git add server/src/routes/product.routes.ts
-git commit -m "feat(products): add paginated product listing with search, filter, sort, and slug lookup"
-git add server/src/tests/products.test.ts
-git commit -m "test(products): add coverage for product list, filters, search, and 404 handling"
-git checkout develop
-git merge feature/product-catalog --no-ff -m "merge: feature/product-catalog"
-
-# ─────────────────────────────────────────────
-# CLIENT FOUNDATION
-# ─────────────────────────────────────────────
-git checkout -b feature/cart
-git add client/package.json client/tsconfig.json client/vite.config.ts client/tailwind.config.ts client/postcss.config.js client/index.html
-git add client/src/main.tsx client/src/App.tsx client/src/index.css
-git add client/src/types/ client/src/api/ client/src/store/ client/src/utils/ client/src/hooks/
-git commit -m "feat(client): scaffold React+Vite+TypeScript app with Axios API layer, Zustand stores, and Tailwind"
-git add client/src/layouts/ client/src/routes/ client/src/components/
-git commit -m "feat(ui): add MainLayout, Navbar, Footer, ProtectedRoute, and reusable UI components"
-git add client/src/pages/CartPage.tsx client/src/store/cartStore.ts
-git commit -m "feat(cart): implement persistent cart with localStorage, stock limits, quantity controls"
-git checkout develop
-git merge feature/cart --no-ff -m "merge: feature/cart"
-
-# ─────────────────────────────────────────────
-# STRIPE CHECKOUT
-# ─────────────────────────────────────────────
-git checkout -b feature/stripe-checkout
-git add server/src/config/stripe.ts
-git add server/src/validators/checkout.validator.ts
-git add server/src/services/checkout.service.ts
-git add server/src/controllers/checkout.controller.ts
-git add server/src/routes/checkout.routes.ts
-git commit -m "feat(checkout): integrate Stripe checkout session creation with server-side price validation"
-git add client/src/api/checkout.api.ts
-git add client/src/pages/CheckoutSuccessPage.tsx client/src/pages/CheckoutCancelPage.tsx
-git commit -m "feat(checkout): add client checkout flow, success page with session verification, and cancel page"
-git checkout develop
-git merge feature/stripe-checkout --no-ff -m "merge: feature/stripe-checkout"
-
-# ─────────────────────────────────────────────
-# ORDERS
-# ─────────────────────────────────────────────
-git checkout -b feature/orders-history
-git add server/src/services/order.service.ts
-git add server/src/controllers/order.controller.ts
-git add server/src/routes/order.routes.ts
-git commit -m "feat(orders): add order history and order detail endpoints for authenticated users"
-git add server/src/tests/orders.test.ts
-git commit -m "test(orders): add coverage for order list, detail, and auth guards"
-git add client/src/api/orders.api.ts
-git add client/src/pages/OrdersPage.tsx client/src/pages/OrderDetailPage.tsx
-git add client/src/components/ui/OrderCard.tsx
-git commit -m "feat(orders): add order history dashboard and order detail page with line items"
-git checkout develop
-git merge feature/orders-history --no-ff -m "merge: feature/orders-history"
-
-# ─────────────────────────────────────────────
-# PAGES & UI POLISH
-# ─────────────────────────────────────────────
-git checkout -b feature/ui-polish
-git add client/src/pages/HomePage.tsx client/src/pages/ProductsPage.tsx
-git add client/src/pages/ProductDetailPage.tsx
-git add client/src/pages/LoginPage.tsx client/src/pages/RegisterPage.tsx
-git add client/src/pages/NotFoundPage.tsx
-git commit -m "feat(ui): add homepage with hero/featured/categories, products page with filters, auth forms, 404"
-git checkout develop
-git merge feature/ui-polish --no-ff -m "merge: feature/ui-polish"
-
-# ─────────────────────────────────────────────
-# TESTING + CI
-# ─────────────────────────────────────────────
-git checkout -b feature/testing-ci
-git add client/src/tests/
-git commit -m "test(client): add Vitest tests for cart store, auth store, ProductCard, and formatters"
-git add .github/workflows/ci.yml
-git commit -m "chore(ci): add GitHub Actions CI with lint, test, and build jobs for server and client"
-git checkout develop
-git merge feature/testing-ci --no-ff -m "merge: feature/testing-ci"
-
-# ─────────────────────────────────────────────
-# DOCUMENTATION & DEPLOYMENT
-# ─────────────────────────────────────────────
-git checkout -b chore/documentation
-git add README.md docs/ server/render.yaml client/vercel.json
-git commit -m "docs(readme): add comprehensive README with architecture diagram, API reference, and deployment guide"
-git checkout develop
-git merge chore/documentation --no-ff -m "merge: chore/documentation"
-
-# ─────────────────────────────────────────────
-# RELEASE TO MAIN
-# ─────────────────────────────────────────────
-git checkout main
-git merge develop --no-ff -m "release: v1.0.0 — full-stack BladeMart e-commerce platform"
-git tag -a v1.0.0 -m "v1.0.0: BladeMart initial release"
-git push origin main develop --tags
-```
-
----
-
-## Hotfix Process
+1. Sync local repository:
 
 ```bash
-# Create hotfix from main
 git checkout main
-git checkout -b hotfix/fix-description
+git pull origin main
+```
 
-# Make fix, commit
-git commit -m "fix(scope): describe what was fixed"
+2. Create a branch:
 
-# Merge back to both main and develop
+```bash
+git checkout -b feature/<short-name>
+```
+
+3. Make focused changes and commit in logical chunks.
+4. Push branch:
+
+```bash
+git push -u origin feature/<short-name>
+```
+
+5. Open a Pull Request into `develop` (or directly into `main` if no `develop` branch is used).
+6. Wait for CI, address review comments, and merge.
+
+## 4. Commit Message Conventions
+
+Use Conventional Commits where possible:
+
+- `feat(scope): ...`
+- `fix(scope): ...`
+- `docs(scope): ...`
+- `test(scope): ...`
+- `chore(scope): ...`
+- `refactor(scope): ...`
+
+Examples:
+
+- `feat(checkout): validate stock before creating Stripe session`
+- `fix(auth): return 401 on invalid token`
+- `docs(readme): update local setup instructions`
+
+## 5. Pull Request Guidelines
+
+A PR should:
+
+- Have a clear title and summary
+- Reference related issue/task when available
+- Include testing notes (manual and automated)
+- Be scoped to one concern when possible
+- Pass all CI checks before merge
+
+## 6. Suggested Repository Settings (GitHub)
+
+Enable branch protection for `main`:
+
+- Require pull request before merging
+- Require status checks to pass
+- Require up-to-date branch before merging
+- Block force pushes
+- Block branch deletion
+
+Optional for `develop`:
+
+- Require pull request
+- Require status checks
+
+## 7. Release Flow
+
+If using `develop`:
+
+1. Merge completed work into `develop` via PRs.
+2. Validate integration in `develop`.
+3. Create PR from `develop` to `main`.
+4. Merge and tag release.
+
+```bash
 git checkout main
-git merge hotfix/fix-description --no-ff
-git tag -a v1.0.1 -m "v1.0.1: hotfix description"
+git pull origin main
+git tag -a v1.0.0 -m "v1.0.0"
+git push origin v1.0.0
+```
 
-git checkout develop
-git merge hotfix/fix-description --no-ff
+If not using `develop`, merge feature branches directly to `main` through PRs and tag releases at milestones.
 
-git branch -d hotfix/fix-description
+## 8. Hotfix Flow
+
+1. Branch from `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b hotfix/<short-name>
+```
+
+2. Implement fix, commit, and push.
+3. Open PR to `main` and merge after review.
+4. Tag patch release (example: `v1.0.1`).
+5. If `develop` exists, merge hotfix back into `develop`.
+
+## 9. Suggested .gitignore Practice
+
+Never commit:
+
+- `.env` files
+- API keys and secrets
+- local build artifacts
+- editor-specific local state
+
+## 10. Fast Command Reference
+
+```bash
+# Start feature work
+git checkout main
+git pull origin main
+git checkout -b feature/new-capability
+
+# Commit and push
+git add .
+git commit -m "feat(scope): concise summary"
+git push -u origin feature/new-capability
+
+# Keep branch updated
+git fetch origin
+git rebase origin/main
 ```
