@@ -148,29 +148,6 @@ Base URL (local): `http://localhost:5000/api`
 - Health
   - `GET /health`
 
-## Common Issues
-
-### Invalid API Key provided: sk_test_...
-
-Cause: `STRIPE_SECRET_KEY` is placeholder or invalid.
-
-Fix:
-
-1. Replace with a real Stripe test key from Dashboard.
-2. Restart the backend server.
-
-### Old product data/images still showing
-
-Cause: database has old seeded data.
-
-Fix:
-
-```bash
-npm run db:seed
-```
-
-Then hard-refresh browser.
-
 ## Tests
 
 Run all tests:
